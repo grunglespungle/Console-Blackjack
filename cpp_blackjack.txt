@@ -1,0 +1,133 @@
+#include <iostream>
+#include <vector>
+#include <random>
+using namespace std;
+
+// Create a better random number generator
+random_device rd;
+mt19937 gen(rd());
+uniform_int_distribution<> dist(1, 13);
+
+// Draw a card (1 = Ace, 2–10 normal, face cards = 10)
+int drawCard() {
+    int card = dist(gen);
+    if (card > 10) return 10;
+    return card;
+}
+
+// Calculate hand value with Ace handling
+int calculateHand(const vector<int>& hand) {
+    int total = 0;
+    int aces = 0;
+
+    for (int card : hand) {
+        if (card == 1) {
+            aces++;
+            total += 11;
+        } else {
+            total += card;
+        }
+    }
+
+    // Adjust Aces if bust
+    while (total > 21 && aces > 0) {
+        total -= 10;
+        aces--;
+    }
+
+    return total;
+}
+
+// Print hand
+void printHand(const vector<int>& hand, bool hideFirst = false) {
+    for (size_t i = 0; i < hand.size(); i++) {
+        if (i == 0 && hideFirst) {
+            cout << "[Hidden] ";
+        } else {
+            cout << hand[i] << " ";
+        }
+    }
+    cout << endl;
+}
+
+int main() {
+    string answer;
+
+    cout << "Welcome to Blackjack! Type 'yes' to play: ";
+    cin >> answer;
+
+    while (answer == "yes") {
+        vector<int> playerHand;
+        vector<int> dealerHand;
+
+        // Initial deal
+        playerHand.push_back(drawCard());
+        playerHand.push_back(drawCard());
+
+        dealerHand.push_back(drawCard());
+        dealerHand.push_back(drawCard());
+
+        cout << "\nDealer's hand: ";
+        printHand(dealerHand, true);
+
+        cout << "Your hand: ";
+        printHand(playerHand);
+        cout << "Total: " << calculateHand(playerHand) << endl;
+
+        // Player turn
+        while (calculateHand(playerHand) < 21) {
+            int choice;
+            cout << "\n1 = Hit, 2 = Stand: ";
+            cin >> choice;
+
+            if (choice == 1) {
+                playerHand.push_back(drawCard());
+                cout << "Your hand: ";
+                printHand(playerHand);
+                cout << "Total: " << calculateHand(playerHand) << endl;
+            } else if (choice == 2) {
+                break;
+            } else {
+                cout << "Invalid choice.\n";
+            }
+        }
+
+        int playerTotal = calculateHand(playerHand);
+
+        if (playerTotal > 21) {
+            cout << "\nYou busted! Dealer wins.\n";
+        } else {
+            // Dealer turn
+            cout << "\nDealer reveals hand: ";
+            printHand(dealerHand);
+
+            while (calculateHand(dealerHand) < 17) {
+                dealerHand.push_back(drawCard());
+                cout << "Dealer hits: ";
+                printHand(dealerHand);
+            }
+
+            int dealerTotal = calculateHand(dealerHand);
+
+            cout << "\nFinal totals:\n";
+            cout << "You: " << playerTotal << endl;
+            cout << "Dealer: " << dealerTotal << endl;
+
+            if (dealerTotal > 21) {
+                cout << "Dealer busts! You win!\n";
+            } else if (playerTotal > dealerTotal) {
+                cout << "You win!\n";
+            } else if (dealerTotal > playerTotal) {
+                cout << "Dealer wins!\n";
+            } else {
+                cout << "Push (tie).\n";
+            }
+        }
+
+        cout << "\nPlay again? (yes/no): ";
+        cin >> answer;
+    }
+
+    cout << "Thanks for playing!\n";
+    return 0;
+}
